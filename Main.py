@@ -2,6 +2,10 @@ import json
 import time
 import keyboard
 import pygetwindow as gw
+import subprocess
+
+# 更新
+subprocess.call("更新曲库.bat", shell=True)
 
 # 读取JSON文件并返回数据
 def load_json(file_path):
@@ -55,7 +59,7 @@ def find_and_activate_window(window_title):
         
 # 主程序
 if __name__ == "__main__":
-    songs_folder = "score/"  # 替换成你的曲谱文件夹路径喵
+    songs_folder = "score/score/"  # 替换成你的曲谱文件夹路径喵
 
     # 从文件夹读取所有曲目
     import os
