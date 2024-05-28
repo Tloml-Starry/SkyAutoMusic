@@ -1,5 +1,6 @@
 # SkyAutoMusic
 
+交流Q群: 392665563
 PC端《Sky · 光遇》自动弹琴
 > 环境准备: Git, Python
 ---
