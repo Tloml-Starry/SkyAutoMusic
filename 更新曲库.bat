@@ -20,5 +20,5 @@ if not exist %localDir% (
     git pull
     echo 更新完成
 )
-
+echo 按下任意键继续
 pause
