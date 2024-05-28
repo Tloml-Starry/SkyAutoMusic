@@ -1,6 +1,5 @@
 # SkyAutoMusic
 
-交流Q群: 392665563
 PC端《Sky · 光遇》自动弹琴
 > 环境准备: Git, Python
 ---
@@ -27,3 +26,5 @@ pip install subprocess
 
 ## 曲谱编写
 运行`MusicProducer.py`文件，输入名称，弹奏间隔之后输入按键回车输入下一个按键即可，退出输入`exit`回车即可
+
+## 交流Q群: 392665563  
