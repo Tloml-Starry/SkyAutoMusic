@@ -1,7 +1,7 @@
 # SkyAutoMusic
 
 PC端《Sky · 光遇》自动弹琴
-> 环境准备: Git, Python
+> 环境准备: Git(非必须), Python
 ---
 
 ## 下载
