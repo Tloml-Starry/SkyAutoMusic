@@ -2,7 +2,7 @@ import json
 import os
 
 def generate_music_notes():
-    folder_name = "score"
+    folder_name = "score/score"
     if not os.path.exists(folder_name):
         os.makedirs(folder_name)
 
