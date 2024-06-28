@@ -16,9 +16,7 @@ git clone https://github.com/Tloml-Starry/SkyAutoMusic
 
 安装第三方库
 ```
-pip install pygetwindow
-pip install keyboard
-pip install subprocess
+pip install pygetwindow keyboard
 ```
 
 ## 使用方法
