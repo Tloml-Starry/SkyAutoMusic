@@ -27,3 +27,5 @@ pip install pygetwindow keyboard
 然后放进`SkyAutoMusic/score/score`路径中
 
 ## 交流Q群: 392665563  
+
+#### 有能力的佬可以帮我写个GUI吗 awa(我太菜了)
