@@ -4,6 +4,7 @@ import json
 import pygetwindow as gw
 import os
 import subprocess
+import codecs
 
 subprocess.call("更新曲库.bat", shell=True)
 
@@ -19,7 +20,7 @@ key_mapping = {
 
 def load_json(file_path):
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with codecs.open(file_path, 'r', encoding='auto') as f:
             return json.load(f)
     except (FileNotFoundError, json.JSONDecodeError) as e:
         print(f"读取JSON文件出错: {e}")
