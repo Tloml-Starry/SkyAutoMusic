@@ -23,6 +23,7 @@ pip install pygetwindow keyboard
 游戏中打开钢琴或其他15键乐器，运行`Main.py`文件，选择曲谱即可
 
 ## 曲库
-自带一些曲子，更多曲子也可以前往[Sky Studio](https://skystudio.app/)下载使用，记得将txt后缀改为json
+自带一些曲子，更多曲子也可以前往[Sky Studio](https://skystudio.app/)下载使用，记得将txt后缀改为json  
+然后放进`SkyAutoMusic/score/score`路径中
 
 ## 交流Q群: 392665563  
