@@ -4,6 +4,7 @@ import json
 import pygetwindow as gw
 import os
 import subprocess
+import chardet
 import codecs
 
 subprocess.call("更新曲库.bat", shell=True)
@@ -19,8 +20,11 @@ key_mapping = {
 
 
 def load_json(file_path):
+    with open(file_path, 'rb') as f:
+        encoding = chardet.detect(f.read())['encoding']
+    
     try:
-        with codecs.open(file_path, 'r', encoding='auto') as f:
+        with codecs.open(file_path, 'r', encoding=encoding) as f:
             return json.load(f)
     except (FileNotFoundError, json.JSONDecodeError) as e:
         print(f"读取JSON文件出错: {e}")
@@ -77,7 +81,7 @@ if __name__ == "__main__":
         song_data = load_json(os.path.join(songs_folder, chosen_song + '.json'))
         if song_data:
             window = gw.getWindowsWithTitle("Sky")
-            if window:
+            if window and len(window[0].title) == 3:
                 sky_window = window[0]
                 sky_window.activate()
             else:
