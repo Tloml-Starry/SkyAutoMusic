@@ -6,6 +6,7 @@ import os
 import subprocess
 import chardet
 import codecs
+import threading
 
 subprocess.call("更新曲库.bat", shell=True)
 
@@ -54,12 +55,12 @@ def press_key(key, time_interval):
         keyboard.release(key_to_press)
 
 
-def play_song(song_data):
+def play_song(song_data, stop_event):
     print("开始演奏曲谱，按下ESC键终止")
     start_time = time.time()
     prev_note_time = song_data[0]['songNotes'][0]["time"]
     for note in song_data[0]["songNotes"]:
-        if not running:
+        if stop_event.is_set():
             break
 
         delay = note["time"] - prev_note_time
@@ -80,14 +81,18 @@ if __name__ == "__main__":
     if chosen_song:
         song_data = load_json(os.path.join(songs_folder, chosen_song + '.json'))
         if song_data:
+            sky_windows = None
             window = gw.getWindowsWithTitle("Sky")
-            if window and len(window[0].title) == 3:
+            sky_windows = [win for win in window if win.title == "Sky"]
+            if sky_windows:
                 sky_window = window[0]
                 sky_window.activate()
             else:
                 print("未找到名为'Sky'的窗口")
+                print(window)
+                input("press any key to Exit")
                 exit()
 
-            running = {'value': True}
-            keyboard.on_press_key("esc", lambda _: setattr(running, 'value', False))
-            play_song(song_data)
+            stop_event = threading.Event()
+            keyboard.on_press_key("esc", lambda _: stop_event.set())
+            play_song(song_data, stop_event)
