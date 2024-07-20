@@ -3,11 +3,9 @@ import keyboard
 import json
 import pygetwindow as gw
 import os
-import subprocess
 import chardet
 import codecs
 
-subprocess.call("更新曲库.bat", shell=True)
 
 key_mapping = {
     "1Key0": "Y", "1Key1": "U", "1Key2": "I", "1Key3": "O", "1Key4": "P",
@@ -59,7 +57,7 @@ def play_song(song_data):
     start_time = time.time()
     prev_note_time = song_data[0]['songNotes'][0]["time"]
     for note in song_data[0]["songNotes"]:
-        if not running:
+        if not running['value']:
             break
 
         delay = note["time"] - prev_note_time
@@ -70,7 +68,8 @@ def play_song(song_data):
     end_time = time.time()
     total_time = end_time - start_time
     print(f"曲谱演奏完成！总共用时：{total_time:.2f}秒")
-
+    print("更多曲谱请前往skystudio.app下载放进乐谱文件夹，记得将txt后缀改为json")
+    
 
 if __name__ == "__main__":
     songs_folder = "score/score/"
