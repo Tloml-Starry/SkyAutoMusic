@@ -79,14 +79,19 @@ if __name__ == "__main__":
     if chosen_song:
         song_data = load_json(os.path.join(songs_folder, chosen_song + '.json'))
         if song_data:
+            sky_windows = None
             window = gw.getWindowsWithTitle("Sky")
-            if window and len(window[0].title) == 3:
+            sky_windows = [win for win in window if win.title == "Sky"]
+            if sky_windows:
                 sky_window = window[0]
                 sky_window.activate()
             else:
                 print("未找到名为'Sky'的窗口")
+                print(window)
+                input("press any key to Exit")
                 exit()
 
-            running = {'value': True}
-            keyboard.on_press_key("esc", lambda _: setattr(running, 'value', False))
-            play_song(song_data)
+
+            stop_event = threading.Event()
+            keyboard.on_press_key("esc", lambda _: stop_event.set())
+            play_song(song_data, stop_event)
