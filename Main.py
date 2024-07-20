@@ -5,6 +5,7 @@ import pygetwindow as gw
 import os
 import chardet
 import codecs
+import threading
 
 
 key_mapping = {
@@ -52,12 +53,12 @@ def press_key(key, time_interval):
         keyboard.release(key_to_press)
 
 
-def play_song(song_data):
+def play_song(song_data, stop_event):
     print("开始演奏曲谱，按下ESC键终止")
     start_time = time.time()
     prev_note_time = song_data[0]['songNotes'][0]["time"]
     for note in song_data[0]["songNotes"]:
-        if not running['value']:
+        if stop_event.is_set():
             break
 
         delay = note["time"] - prev_note_time
@@ -94,4 +95,4 @@ if __name__ == "__main__":
 
             stop_event = threading.Event()
             keyboard.on_press_key("esc", lambda _: stop_event.set())
-            play_song(song_data, stop_event)
+            play_song(song_data,stop_event)
