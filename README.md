@@ -16,7 +16,7 @@ git clone https://github.com/Tloml-Starry/SkyAutoMusic
 
 安装第三方库
 ```
-pip install pygetwindow keyboard
+pip install pygetwindow keyboard chardet
 ```
 
 ## 使用方法
