@@ -20,7 +20,7 @@ pip install pygetwindow keyboard chardet
 ```
 
 ## 使用方法
-游戏中打开钢琴或其他15键乐器，运行`Main.py`文件，选择曲谱即可
+游戏中打开钢琴或其他15键乐器，使用Cmd或其他命令行工具运行`Main.py`文件，选择曲谱即可
 
 ## 曲库
 自带一些曲子，更多曲子也可以前往[Sky Studio](https://skystudio.app/)下载使用，记得将txt后缀改为json  
