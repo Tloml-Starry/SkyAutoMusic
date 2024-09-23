@@ -4,8 +4,8 @@ PC端《Sky · 光遇》自动弹琴
 ---
 
 ## 下载
-[Releases](https://gitee.com/Tloml-Starry/SkyAutoMusic/releases)  
-选最新的版本下载即可
+[Releases](https://gitHub.com/Tloml-Starry/SkyAutoMusic/releases)  
+选最新的版本下载`SkyAutoMusic.7z`压缩包解压即可
 
 ## 使用方法
 游戏中打开钢琴或其他15键乐器，运行`Skyplayer.exe`，选择曲谱点击播放即可
