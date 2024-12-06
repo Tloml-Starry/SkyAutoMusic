@@ -26,7 +26,7 @@ class MainApplication:
         self.play_thread = None  # 播放线程
 
     def setup_ui(self):
-        self.root.title("光·遇 | SkyAutoMusic")  # 设置窗口标题
+        self.root.title("？")  # 设置窗口标题
         self.root.geometry("800x600")  # 设置窗口大小
         self.root.protocol("WM_DELETE_WINDOW", self.on_close)  # 关闭窗口时的回调
 
@@ -97,18 +97,21 @@ class MainApplication:
     def on_play(self):
         if self.selected_song.get():
             try:
-                # 查找名为“Sky”或“光·遇”的窗口
-                sky_window = next((w for w in gw.getAllTitles() if 'Sky' in w or '光·遇' in w), None)
+                # 更精确地查找名为“Sky”或“光·遇”的窗口
+                windows = gw.getWindowsWithTitle('Sky') + gw.getWindowsWithTitle('光·遇')
+                sky_window = next((w for w in windows if w.title.strip() == 'Sky' or w.title.strip() == '光·遇'), None)
                 if sky_window:
+                    print(f"找到窗口: {sky_window.title}")
                     sky_window.activate()
-                    sky_window.minimize()
-                    sky_window.maximize()
                     self.playing = True
                 else:
                     raise IndexError
             except IndexError:
                 messagebox.showerror("错误", "未找到 光·遇 窗口，请打开光·遇再点击演奏")
                 self.playing = False
+            except Exception as e:
+                print(f"发生错误: {e}")
+                messagebox.showerror("错误", f"发生未知错误: {e}")
 
             if self.playing and not self.paused:
                 song_data_list = load_json(f"score/score/{self.selected_song.get()}.json")
