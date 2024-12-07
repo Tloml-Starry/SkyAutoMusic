@@ -1,14 +1,11 @@
 import tkinter as tk
 from tkinter import ttk, messagebox, PhotoImage
 from PIL import Image, ImageTk
-import difflib
 from utils import load_json, load_key_mapping
 from player import play_song
 import threading
 import keyboard
 import pygetwindow as gw
-import pyautogui
-import webbrowser
 import json
 
 class MainApplication:
