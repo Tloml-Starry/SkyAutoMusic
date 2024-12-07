@@ -33,6 +33,9 @@ def load_json(file_path):
 def press_key(key, time_interval):
     if key in key_mapping:
         key_to_press = key_mapping[key]
+        print(f"按下按键: {key_to_press}")
         keyboard.press(key_to_press)
         time.sleep(time_interval)
         keyboard.release(key_to_press)
+    else:
+        print(f"按键 {key} 未找到映射")

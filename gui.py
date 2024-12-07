@@ -130,7 +130,7 @@ class MainApplication:
                         keyboard.on_press_key("F10", self.toggle_pause)
 
                         self.log_window.log("按下 F11 键停止演奏")
-                        self.play_thread = threading.Thread(target=play_song, args=(song_data, self.stop_event, self.speed_var.get(), self.log_window, self.key_mapping))
+                        self.play_thread = threading.Thread(target=play_song, args=(song_data, self.stop_event, self.speed_var.get(), self.log_window))
                         self.play_thread.start()
                         
                         self.log_window.log("开始播放歌曲: " + self.selected_song.get())
