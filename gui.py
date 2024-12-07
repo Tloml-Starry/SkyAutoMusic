@@ -2,69 +2,72 @@ import tkinter as tk
 from tkinter import ttk, messagebox, PhotoImage
 from PIL import Image, ImageTk
 import difflib
-from utils import load_json
+from utils import load_json, load_key_mapping
 from player import play_song
 import threading
 import keyboard
 import pygetwindow as gw
 import pyautogui
 import webbrowser
+import json
 
 class MainApplication:
     def __init__(self, root, songs):
-        self.root = root  # 主窗口
-        self.songs = songs  # 歌曲列表
-        self.selected_song = tk.StringVar()  # 当前选中的歌曲
-        self.search_var = tk.StringVar()  # 搜索框输入的内容
-        self.speed_var = tk.DoubleVar(value=1.0)  # 播放速度
+        self.root = root
+        self.songs = songs
+        self.selected_song = tk.StringVar()
+        self.search_var = tk.StringVar()
+        self.speed_var = tk.DoubleVar(value=1.0)
         
-        self.setup_ui()  # 初始化UI
-        self.log_window = LogWindow(self.frame_right)  # 日志窗口
-        self.playing = False  # 是否正在播放
-        self.paused = False  # 是否暂停
-        self.stop_event = threading.Event()  # 停止事件
-        self.play_thread = None  # 播放线程
+        self.key_mapping = load_key_mapping()
+        self.setup_ui()
+        self.log_window = LogWindow(self.frame_right)
+        self.playing = False
+        self.paused = False
+        self.stop_event = threading.Event()
+        self.play_thread = None
 
     def setup_ui(self):
-        self.root.title("？")  # 设置窗口标题
-        self.root.geometry("800x600")  # 设置窗口大小
-        self.root.protocol("WM_DELETE_WINDOW", self.on_close)  # 关闭窗口时的回调
+        self.root.title("？")
+        self.root.geometry("800x600")
+        self.root.protocol("WM_DELETE_WINDOW", self.on_close)
 
-        # 尝试加载图标
         try:
             icon = ImageTk.PhotoImage(Image.open('icon.ico'))
             self.root.iconphoto(True, icon)
         except Exception as e:
             print(f"加载图标失败: {e}")
 
-        # 设置UI风格
         style = ttk.Style()
         style.theme_use('clam')
         style.configure("TButton", font=("Helvetica", 12), padding=6)
         style.configure("TLabel", font=("Helvetica", 12), padding=6)
         style.configure("TListbox", font=("Helvetica", 12), padding=6)
 
-        # 左侧框架
         self.frame_left = ttk.Frame(self.root, padding="10")
         self.frame_left.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
-        # 右侧框架
         self.frame_right = ttk.Frame(self.root, padding="10")
         self.frame_right.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
 
-        # 搜索框
         search_entry = ttk.Entry(self.frame_left, textvariable=self.search_var, font=("Helvetica", 12))
         search_entry.pack(fill=tk.X, pady=5)
         search_entry.bind('<KeyRelease>', self.on_search)
 
-        # 歌曲列表框
-        self.song_listbox = tk.Listbox(self.frame_left, font=("Helvetica", 12))
-        self.song_listbox.pack(fill=tk.BOTH, expand=True, pady=5)
+        self.song_listbox_frame = ttk.Frame(self.frame_left)
+        self.song_listbox_frame.pack(fill=tk.BOTH, expand=True, pady=5)
+
+        self.song_listbox_scrollbar = ttk.Scrollbar(self.song_listbox_frame, orient=tk.VERTICAL)
+        self.song_listbox = tk.Listbox(self.song_listbox_frame, font=("Helvetica", 12), yscrollcommand=self.song_listbox_scrollbar.set)
+        self.song_listbox_scrollbar.config(command=self.song_listbox.yview)
+
+        self.song_listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        self.song_listbox_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
         for song in self.songs:
             self.song_listbox.insert(tk.END, song)
         self.song_listbox.bind('<<ListboxSelect>>', self.on_select)
 
-        # 播放、暂停、退出按钮
         button_frame = ttk.Frame(self.frame_right)
         button_frame.pack(pady=10)
 
@@ -77,7 +80,6 @@ class MainApplication:
         exit_button = ttk.Button(button_frame, text="退出", command=self.on_exit)
         exit_button.pack(side=tk.LEFT, padx=5)
 
-        # 播放速度标签和滑块
         speed_label = ttk.Label(self.frame_right, text="播放速度", font=("Helvetica", 12, "bold"))
         speed_label.pack(pady=10)
 
@@ -90,6 +92,12 @@ class MainApplication:
         self.speed_display = ttk.Label(speed_frame, text=f"{self.speed_var.get():.1f}x", font=("Helvetica", 10))
         self.speed_display.pack(side=tk.LEFT, padx=5)
 
+        song_count_label = ttk.Label(self.frame_left, text=f"曲谱数量: {len(self.songs)}", font=("Helvetica", 12))
+        song_count_label.pack(pady=5)
+
+        self.edit_score_button = ttk.Button(self.frame_right, text="编辑曲谱", command=self.open_score_editor)
+        self.edit_score_button.pack(pady=5)
+
     def on_select(self, event):
         if self.song_listbox.curselection():
             self.selected_song.set(self.song_listbox.get(self.song_listbox.curselection()))
@@ -97,7 +105,6 @@ class MainApplication:
     def on_play(self):
         if self.selected_song.get():
             try:
-                # 更精确地查找名为“Sky”或“光·遇”的窗口
                 windows = gw.getWindowsWithTitle('Sky') + gw.getWindowsWithTitle('光·遇')
                 sky_window = next((w for w in windows if w.title.strip() == 'Sky' or w.title.strip() == '光·遇'), None)
                 if sky_window:
@@ -123,7 +130,7 @@ class MainApplication:
                         keyboard.on_press_key("F10", self.toggle_pause)
 
                         self.log_window.log("按下 F11 键停止演奏")
-                        self.play_thread = threading.Thread(target=play_song, args=(song_data, self.stop_event, self.speed_var.get(), self.log_window))
+                        self.play_thread = threading.Thread(target=play_song, args=(song_data, self.stop_event, self.speed_var.get(), self.log_window, self.key_mapping))
                         self.play_thread.start()
                         
                         self.log_window.log("开始播放歌曲: " + self.selected_song.get())
@@ -148,11 +155,8 @@ class MainApplication:
         exit()
 
     def on_search(self, event):
-        search_term = self.search_var.get()
-        if search_term == "":
-            filtered_songs = self.songs
-        else:
-            filtered_songs = difflib.get_close_matches(search_term, self.songs, n=len(self.songs), cutoff=0.1)
+        search_term = self.search_var.get().lower()
+        filtered_songs = [song for song in self.songs if search_term in song.lower()]
         self.song_listbox.delete(0, tk.END)
         for song in filtered_songs:
             self.song_listbox.insert(tk.END, song)
@@ -162,6 +166,32 @@ class MainApplication:
 
     def update_speed_label(self, value):
         self.speed_display.config(text=f"{float(value):.1f}x")
+
+    def open_score_editor(self):
+        if not self.selected_song.get():
+            messagebox.showwarning("提示", "请先选择一首曲谱进行编辑")
+            return
+
+        editor_window = tk.Toplevel(self.root)
+        editor_window.title("曲谱编辑器")
+
+        song_data = load_json(f"score/score/{self.selected_song.get()}.json")
+        if song_data:
+            text_widget = tk.Text(editor_window)
+            text_widget.insert(tk.END, json.dumps(song_data, indent=4))
+            text_widget.pack()
+
+        def save_score():
+            try:
+                new_data = json.loads(text_widget.get("1.0", tk.END))
+                with open(f"score/score/{self.selected_song.get()}.json", 'w') as f:
+                    json.dump(new_data, f, indent=4)
+                messagebox.showinfo("成功", "曲谱已保存")
+            except json.JSONDecodeError:
+                messagebox.showerror("错误", "曲谱格式不正确")
+
+        save_button = ttk.Button(editor_window, text="保存", command=save_score)
+        save_button.pack()
 
 class LogWindow:
     def __init__(self, root):

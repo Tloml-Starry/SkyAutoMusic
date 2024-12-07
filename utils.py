@@ -5,7 +5,6 @@ import keyboard
 import time
 
 def load_key_mapping(custom_mapping=None):
-    # 默认按键映射
     default_mapping = {
         "1Key0": "Y", "1Key1": "U", "1Key2": "I", "1Key3": "O", "1Key4": "P",
         "1Key5": "H", "1Key6": "J", "1Key7": "K", "1Key8": "L", "1Key9": ";",
@@ -24,9 +23,9 @@ def load_json(file_path):
     try:
         with open(file_path, 'rb') as f:
             raw_data = f.read()
-            encoding = chardet.detect(raw_data)['encoding']  # 检测文件编码
+            encoding = chardet.detect(raw_data)['encoding']
         with codecs.open(file_path, 'r', encoding=encoding) as f:
-            return json.load(f)  # 加载JSON数据
+            return json.load(f)
     except (FileNotFoundError, json.JSONDecodeError) as e:
         print(f"读取JSON文件出错: {e}")
         return None
@@ -34,6 +33,6 @@ def load_json(file_path):
 def press_key(key, time_interval):
     if key in key_mapping:
         key_to_press = key_mapping[key]
-        keyboard.press(key_to_press)  # 按下按键
-        time.sleep(time_interval)  # 等待指定时间
-        keyboard.release(key_to_press)  # 释放按键
+        keyboard.press(key_to_press)
+        time.sleep(time_interval)
+        keyboard.release(key_to_press)
