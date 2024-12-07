@@ -205,13 +205,9 @@ class LogWindow:
         self.text_widget.insert(tk.END, "作者: Tloml-Starry\n")
         self.text_widget.insert(tk.END, "公告: 欢迎使用SkyAutoMusic!这是开源项目,如果你是买来的,那你被骗了!\n")
         self.text_widget.insert(tk.END, "访问项目主页: ")
-        self.text_widget.insert(tk.END, "GitHub\n", ("link",))
-        self.text_widget.tag_config("link", foreground="blue", underline=True)
-        self.text_widget.tag_bind("link", "<Button-1>", lambda e: self.open_link("https://github.com/Tloml-Starry/SkyAutoMusic"))
+        self.text_widget.insert(tk.END, "https://github.com/Tloml-Starry/SkyAutoMusic\n", ("link",))
+        self.text_widget.tag_config("link", foreground="blue")
         self.text_widget.config(state='disabled')
-
-    def open_link(self, url):
-        webbrowser.open_new(url)
 
     def log(self, message):
         self.text_widget.config(state='normal')
