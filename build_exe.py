@@ -5,5 +5,6 @@ PyInstaller.__main__.run([
     '--onefile',
     '--windowed',
     '--icon=icon.ico',
+    '--add-data=icon.ico;.',
     '--name=SkyPlayer'
 ])

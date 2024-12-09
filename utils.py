@@ -19,23 +19,47 @@ def load_key_mapping(custom_mapping=None):
 
 key_mapping = load_key_mapping()
 
-def load_json(file_path):
+def load_json(file_path, encoding_cache={}):
+    """优化JSON加载"""
     try:
-        with open(file_path, 'rb') as f:
-            raw_data = f.read()
-            encoding = chardet.detect(raw_data)['encoding']
+        # 使用缓存的编码信息
+        if file_path in encoding_cache:
+            encoding = encoding_cache[file_path]
+        else:
+            with open(file_path, 'rb') as f:
+                raw_data = f.read()
+                encoding = chardet.detect(raw_data)['encoding']
+                encoding_cache[file_path] = encoding
+                
         with codecs.open(file_path, 'r', encoding=encoding) as f:
-            return json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError) as e:
+            data = json.load(f)
+            if isinstance(data, list) and data:
+                song_data = data[0]
+                return song_data if "songNotes" in song_data else data
+            return data
+    except Exception as e:
         print(f"读取JSON文件出错: {e}")
         return None
 
 def press_key(key, time_interval):
     if key in key_mapping:
         key_to_press = key_mapping[key]
-        print(f"按下按键: {key_to_press}")
         keyboard.press(key_to_press)
         time.sleep(time_interval)
         keyboard.release(key_to_press)
     else:
         print(f"按键 {key} 未找到映射")
+
+def release_all_keys():
+    """释放所有已映射的按键"""
+    for key in key_mapping.values():
+        keyboard.release(key)
+
+# 优化按键映射
+_key_map_cache = {}
+
+def get_key_mapping(key):
+    """使用缓存获取按键映射"""
+    if key not in _key_map_cache:
+        _key_map_cache[key] = key_mapping.get(key)
+    return _key_map_cache[key]

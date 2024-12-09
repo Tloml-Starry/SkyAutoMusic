@@ -1,6 +1,8 @@
 import os
-import tkinter as tk
-from gui import MainApplication
+import sys
+from PyQt6.QtWidgets import QApplication
+from PyQt6.QtGui import QIcon
+from gui import ModernSkyMusicPlayer
 
 def rename_txt_to_json(folder_path):
     for filename in os.listdir(folder_path):
@@ -18,10 +20,17 @@ def main():
     songs_folder = "score/score/"
     rename_txt_to_json(songs_folder)
 
-    root = tk.Tk()
-    songs = [f.replace('.json', '') for f in os.listdir(songs_folder) if f.endswith('.json')]
-    app = MainApplication(root, songs)
-    root.mainloop()
+    app = QApplication(sys.argv)
+    
+    try:
+        app_icon = QIcon("icon.ico")
+        app.setWindowIcon(app_icon)
+    except Exception as e:
+        print(f"加载图标失败: {str(e)}")
+    
+    window = ModernSkyMusicPlayer()
+    window.show()
+    sys.exit(app.exec())
 
 if __name__ == "__main__":
     main()
