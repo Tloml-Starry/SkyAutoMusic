@@ -637,7 +637,7 @@ class ModernSkyMusicPlayer(QMainWindow):
             self.play_button.setText("开始")
         else:
             if not self.current_song_data:
-                self.log("请先选择一���歌曲")
+                self.log("请先选择一首歌曲")
                 return
             
             # 先检查光遇窗口
@@ -646,7 +646,7 @@ class ModernSkyMusicPlayer(QMainWindow):
             
             # 窗口检查通过后再开始播放
             self.start_playback()
-            self.play_button.setText("���止")
+            self.play_button.setText("停止")
 
     def start_playback(self):
         """开始播放"""
