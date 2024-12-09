@@ -16,6 +16,14 @@ import random
 import time
 import webbrowser
 
+def resource_path(relative_path):
+    """获取资源文件的绝对路径"""
+    try:
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
+
 class PlayThread(QThread):
     update_log = pyqtSignal(str)
     update_progress = pyqtSignal(float)
@@ -189,6 +197,11 @@ class ModernSkyMusicPlayer(QMainWindow):
         super().__init__()
         self.setWindowTitle("Sky Auto Music")
         self.setGeometry(100, 100, 800, 600)
+        
+        try:
+            self.setWindowIcon(QIcon(resource_path("icon.ico")))
+        except Exception as e:
+            print(f"加载窗口图标失败: {str(e)}")
         
         # 设置窗口样式
         self.setStyleSheet("""
@@ -624,7 +637,7 @@ class ModernSkyMusicPlayer(QMainWindow):
             self.play_button.setText("开始")
         else:
             if not self.current_song_data:
-                self.log("请先选择一首歌曲")
+                self.log("请先选择一���歌曲")
                 return
             
             # 先检查光遇窗口
@@ -633,7 +646,7 @@ class ModernSkyMusicPlayer(QMainWindow):
             
             # 窗口检查通过后再开始播放
             self.start_playback()
-            self.play_button.setText("停止")
+            self.play_button.setText("���止")
 
     def start_playback(self):
         """开始播放"""

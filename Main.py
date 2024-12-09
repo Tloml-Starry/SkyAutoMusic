@@ -4,6 +4,14 @@ from PyQt6.QtWidgets import QApplication
 from PyQt6.QtGui import QIcon
 from gui import ModernSkyMusicPlayer
 
+def resource_path(relative_path):
+    """获取资源文件的绝对路径"""
+    try:
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
+
 def rename_txt_to_json(folder_path):
     for filename in os.listdir(folder_path):
         if filename.endswith('.txt'):
@@ -23,7 +31,7 @@ def main():
     app = QApplication(sys.argv)
     
     try:
-        app_icon = QIcon("icon.ico")
+        app_icon = QIcon(resource_path("icon.ico"))
         app.setWindowIcon(app_icon)
     except Exception as e:
         print(f"加载图标失败: {str(e)}")
