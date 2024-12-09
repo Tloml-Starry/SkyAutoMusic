@@ -4,7 +4,7 @@ from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QH
                              QPushButton, QListWidget, QLineEdit, QLabel, QSlider, QDockWidget,
                              QProgressBar, QTabWidget, QGridLayout, QComboBox, QMenu, QMessageBox,
                              QCheckBox, QStackedLayout)
-from PyQt6.QtCore import Qt, QThread, pyqtSignal, QTimer
+from PyQt6.QtCore import Qt, QThread, pyqtSignal, QTimer, QEvent
 from PyQt6.QtGui import QIcon, QDoubleValidator, QKeySequence
 import os
 from player import play_song
@@ -20,7 +20,7 @@ def resource_path(relative_path):
     """获取资源文件的绝对路径"""
     try:
         base_path = sys._MEIPASS
-    except Exception:
+    except AttributeError:
         base_path = os.path.abspath(".")
     return os.path.join(base_path, relative_path)
 
@@ -405,6 +405,8 @@ class ModernSkyMusicPlayer(QMainWindow):
         self.window_check_timer.timeout.connect(self.check_window_focus)
         self.window_check_timer.start(1000)  # 每秒检查一次
 
+        self.progress_bar.installEventFilter(self)
+
     def _update_ui(self):
         """定时更新UI状态"""
         if self.play_thread and self.play_thread.isRunning():
@@ -425,6 +427,7 @@ class ModernSkyMusicPlayer(QMainWindow):
         
         # 创建标签页
         tab_widget = QTabWidget()
+        tab_widget.currentChanged.connect(self.on_tab_changed)  # 连接标签页切换事件
         
         # 歌曲列表标签页
         songs_tab = QWidget()
@@ -450,8 +453,19 @@ class ModernSkyMusicPlayer(QMainWindow):
         favorites_layout.addWidget(self.favorites_list)
         tab_widget.addTab(favorites_tab, "收藏")
         
+        # 打开文件夹标签页
+        open_folder_tab = QWidget()
+        tab_widget.addTab(open_folder_tab, "📂")  # 使用文件夹图标或 emoji
+        
         left_layout.addWidget(tab_widget)
         self.main_layout.addWidget(left_panel, stretch=2)
+
+    def on_tab_changed(self, index):
+        """处理标签页切换事件"""
+        if index == 2:  # 假设打开文件夹标签页是第三个
+            self.open_score_folder()
+            # 立即切换回之前的标签页
+            self.sender().setCurrentIndex(0)  # 假设第一个标签页是默认的
 
     def setup_right_panel(self):
         """设置右侧面板"""
@@ -591,7 +605,8 @@ class ModernSkyMusicPlayer(QMainWindow):
         """过滤歌曲列表"""
         for i in range(self.song_list.count()):
             item = self.song_list.item(i)
-            item.setHidden(text.lower() not in item.text().lower())
+            if item:
+                item.setHidden(text.lower() not in item.text().lower())
 
     def load_song(self, item):
         """只加载歌曲，不播放"""
@@ -767,7 +782,7 @@ class ModernSkyMusicPlayer(QMainWindow):
         next_item = current_list.item(next_row)
         if next_item:
             self.log(f"即将播放: {next_item.text()}")
-            # 如果是从收藏列表播放，确保下一首也在收藏列表中
+            # 如果是从收藏列表播放，保下一首也在收藏列表中
             if current_list == self.favorites_list:
                 self.log("从收藏列表继续播放")
             else:
@@ -799,6 +814,7 @@ class ModernSkyMusicPlayer(QMainWindow):
             self.log_widget.scrollToBottom()
 
     def stop_playback(self):
+        """停止播放"""
         if self.play_thread and self.play_thread.isRunning():
             self.play_thread.stop()
             self.play_thread.wait()
@@ -882,10 +898,12 @@ class ModernSkyMusicPlayer(QMainWindow):
             song_name = item.text()
             if song_name not in self.favorites:
                 add_action = menu.addAction("添加到收藏")
-                add_action.triggered.connect(lambda: self.add_to_favorites(song_name))
+                if add_action:
+                    add_action.triggered.connect(lambda: self.add_to_favorites(song_name))
             else:
                 remove_action = menu.addAction("从收藏中移除")
-                remove_action.triggered.connect(lambda: self.remove_from_favorites(song_name))
+                if remove_action:
+                    remove_action.triggered.connect(lambda: self.remove_from_favorites(song_name))
         
         menu.exec(self.song_list.mapToGlobal(position))
 
@@ -1006,3 +1024,21 @@ class ModernSkyMusicPlayer(QMainWindow):
                     
             except Exception as e:
                 self.log(f"检查窗口焦点时出错: {str(e)}")
+
+    def open_score_folder(self):
+        """打开曲谱文件夹"""
+        folder_path = os.path.abspath("score/score")
+        if os.path.exists(folder_path):
+            os.startfile(folder_path)  # 在Windows上使用os.startfile
+        else:
+            self.log("曲谱文件夹不存在")
+
+    def eventFilter(self, source, event):
+        if source == self.progress_bar:
+            if event.type() == QEvent.Type.MouseButtonPress:
+                self.on_progress_click(event)
+            elif event.type() == QEvent.Type.MouseMove:
+                self.on_progress_drag(event)
+            elif event.type() == QEvent.Type.MouseButtonRelease:
+                self.on_progress_release(event)
+        return super().eventFilter(source, event)
