@@ -1,25 +1,20 @@
-# Sky Auto Music Player
+# SkyAutoMusic
 
-一个用于在Sky光遇中自动演奏乐谱的工具。
+PC端《Sky · 光遇》自动弹琴
+---
 
-## 安装
+## 下载
+[123云盘](https://www.123684.com/s/Q1g5Vv-8jJ63?)  
+1. 下载SkyAutoMusic.zip和SkyPlayer 最新版.exe
+2. 解压SkyAutoMusic.zip之后将SkyPlayer 最新版.exe放入SkyAutoMusic文件夹中运行
 
-1. 确保已安装 Python 3.6+
-2. 安装依赖：   ```bash
-   pip install -r requirements.txt   ```
+#### 开始演奏
+1. 打开游戏之后打开乐器
+2. 选择想要演奏的曲子点击开始演奏
+3. 演奏中途可按F11结束演奏
 
-## 使用
+## 曲库
+自带一些曲子，更多曲子也可以前往[Sky Studio](https://skystudio.app/)下载使用  
+曲谱存储位置: `SkyAutoMusic/score/score`
 
-1. 运行程序：   ```bash
-   python main.py   ```
-
-2. 选择乐谱并点击播放
-
-## 功能
-
-- 支持导入 JSON 格式的乐谱
-- 支持调节播放速度
-- 支持暂停/继续播放
-- 支持收藏夹功能
-
-```</rewritten_file>
+## 交流Q群: 392665563  
