@@ -3,7 +3,7 @@ import json
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, 
                              QPushButton, QListWidget, QLineEdit, QLabel, QSlider, QDockWidget,
                              QProgressBar, QTabWidget, QGridLayout, QComboBox, QMenu, QMessageBox,
-                             QCheckBox, QStackedLayout)
+                             QCheckBox, QStackedLayout, QSizePolicy)
 from PyQt6.QtCore import Qt, QThread, pyqtSignal, QTimer, QEvent
 from PyQt6.QtGui import QIcon, QDoubleValidator, QKeySequence
 import os
@@ -15,6 +15,8 @@ import pygetwindow as gw
 import random
 import time
 import webbrowser
+import requests
+from config import LOCAL_VERSION  # 从 config.py 导入
 
 def resource_path(relative_path):
     """获取资源文件的绝对路径"""
@@ -23,6 +25,18 @@ def resource_path(relative_path):
     except AttributeError:
         base_path = os.path.abspath(".")
     return os.path.join(base_path, relative_path)
+
+def fetch_latest_version():
+    try:
+        response = requests.get('https://gitee.com/Tloml-Starry/resources/raw/master/resources/json/SkyAutoMusicVersion.json')
+        if response.status_code == 200:
+            data = response.json()
+            return data.get('version', '未知版本')
+        else:
+            return '获取失败'
+    except Exception as e:
+        print(f"获取最新版本信息失败: {e}")
+        return '获取失败'
 
 class PlayThread(QThread):
     update_log = pyqtSignal(str)
@@ -196,7 +210,7 @@ class ModernSkyMusicPlayer(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Sky Auto Music")
-        self.setGeometry(100, 100, 800, 600)
+        self.setGeometry(100, 100, 1000, 800)
         
         try:
             self.setWindowIcon(QIcon(resource_path("icon.ico")))
@@ -353,7 +367,7 @@ class ModernSkyMusicPlayer(QMainWindow):
         # 初始化主布局
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
-        self.main_layout = QHBoxLayout(self.central_widget)
+        self.main_layout = QVBoxLayout(self.central_widget)
         
         # 初始化变量
         self.current_song_data = None
@@ -373,11 +387,14 @@ class ModernSkyMusicPlayer(QMainWindow):
         self.favorites_file = "favorites.json"
         self.hotkey_settings_file = "hotkey_settings.json"
         
+        # 初始化延时设置属性
+        self.delay_enabled = False
+        self.delay_min = 200
+        self.delay_max = 500
+        
         # 设置界面 - 注意初始化顺序
-        self.setup_log_window()  # 先初始化日志窗口
-        self.setup_left_panel()
-        self.setup_right_panel()
-        self.setup_hotkeys()
+        self.setup_main_interface()  # 主界面
+        self.setup_log_window()  # 日志窗口
         
         # 加载设置和数据
         self.favorites = self.load_favorites()
@@ -407,13 +424,73 @@ class ModernSkyMusicPlayer(QMainWindow):
 
         self.progress_bar.installEventFilter(self)
 
-    def _update_ui(self):
-        """定时更新UI状态"""
-        if self.play_thread and self.play_thread.isRunning():
-            # 更新进度条等UI元素
-            pass
+        self.load_delay_settings()
 
-    def setup_left_panel(self):
+    def setup_main_interface(self):
+        """设置主界面"""
+        main_interface = QWidget()
+        main_layout = QVBoxLayout(main_interface)
+        
+        # 创建主标签页
+        main_tab_widget = QTabWidget()
+        
+        # 添加播放界面
+        play_tab = QWidget()
+        play_layout = QHBoxLayout(play_tab)
+        
+        # 左侧面板
+        self.setup_left_panel(play_layout)
+        
+        # 右侧面板
+        self.setup_right_panel(play_layout)
+        
+        main_tab_widget.addTab(play_tab, "播放")
+        
+        # 添加关于标签页
+        about_tab = QWidget()
+        about_layout = QVBoxLayout(about_tab)
+        about_layout.setContentsMargins(20, 20, 20, 20)  # 增加边距
+        about_layout.setSpacing(10)  # 增加控件间距
+        
+        # 软件信息
+        latest_version = fetch_latest_version()
+        
+        version_label = QLabel(f"当前版本: {LOCAL_VERSION}")
+        latest_version_label = QLabel(f"最新版本: {latest_version}")
+        author_label = QLabel("作者: Tloml-Starry")
+        
+        # 使用按钮代替标签
+        homepage_button = QPushButton("项目主页")
+        homepage_button.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+        homepage_button.clicked.connect(lambda: webbrowser.open("https://github.com/Tloml-Starry/SkyAutoMusic"))
+        
+        feedback_button = QPushButton("BUG反馈&功能提议")
+        feedback_button.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+        feedback_button.clicked.connect(lambda: webbrowser.open("https://qm.qq.com/q/dWe60BFyE0"))
+        
+        # 将标签添加到布局中
+        for widget in [version_label, latest_version_label, author_label]:
+            widget.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            widget.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+            about_layout.addWidget(widget)
+        
+        # 创建水平布局用于按钮
+        button_layout = QHBoxLayout()
+        button_layout.setSpacing(20)  # 增加按钮间距
+        button_layout.addWidget(homepage_button)
+        button_layout.addWidget(feedback_button)
+        
+        # 将按钮布局添加到关于布局中
+        about_layout.addStretch()  # 添加弹性空间
+        about_layout.addLayout(button_layout)
+        about_layout.addStretch()  # 添加弹性空间
+        
+        main_tab_widget.addTab(about_tab, "关于")
+        
+        main_layout.addWidget(main_tab_widget)
+        self.main_layout.addWidget(main_interface)
+
+    def setup_left_panel(self, layout):
         """设置左侧面板"""
         left_panel = QWidget()
         left_layout = QVBoxLayout(left_panel)
@@ -439,9 +516,8 @@ class ModernSkyMusicPlayer(QMainWindow):
         self.song_list.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.song_list.customContextMenuRequested.connect(self.show_song_context_menu)
         songs_layout.addWidget(self.song_list)
-        tab_widget.addTab(songs_tab, "所有歌曲")
+        tab_widget.addTab(songs_tab, "🎵")
         
-        # 收藏列表标签页
         favorites_tab = QWidget()
         favorites_layout = QVBoxLayout(favorites_tab)
         self.favorites_list = QListWidget()
@@ -451,45 +527,33 @@ class ModernSkyMusicPlayer(QMainWindow):
         self.favorites_list.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.favorites_list.customContextMenuRequested.connect(self.show_favorites_context_menu)
         favorites_layout.addWidget(self.favorites_list)
-        tab_widget.addTab(favorites_tab, "收藏")
+        tab_widget.addTab(favorites_tab, "💙")
         
-        # 打开文件夹标签页
         open_folder_tab = QWidget()
-        tab_widget.addTab(open_folder_tab, "📂")  # 使用文件夹图标或 emoji
+        tab_widget.addTab(open_folder_tab, "📂")
         
         left_layout.addWidget(tab_widget)
-        self.main_layout.addWidget(left_panel, stretch=2)
+        layout.addWidget(left_panel, stretch=2)
 
-    def on_tab_changed(self, index):
-        """处理标签页切换事件"""
-        if index == 2:  # 假设打开文件夹标签页是第三个
-            self.open_score_folder()
-            # 立即切换回之前的标签页
-            self.sender().setCurrentIndex(0)  # 假设第一个标签页是默认的
-
-    def setup_right_panel(self):
+    def setup_right_panel(self, layout):
         """设置右侧面板"""
         right_panel = QWidget()
         right_layout = QVBoxLayout(right_panel)
         right_layout.setContentsMargins(5, 5, 5, 5)
         right_layout.setSpacing(10)
         
-        # 播放控制区域
         play_controls = QHBoxLayout()
         
-        # 播放按钮
         self.play_button = QPushButton("开始")
         self.play_button.clicked.connect(self.toggle_play)
         self.play_button.setFixedHeight(30)
         play_controls.addWidget(self.play_button)
         
-        # 播放模式选择
         self.play_mode = QComboBox()
         self.play_mode.addItems(["单曲播放", "顺序播放", "随机播放"])
         self.play_mode.setFixedHeight(30)
         play_controls.addWidget(self.play_mode)
         
-        # 自动播放开关
         self.auto_play = QCheckBox("自动播放")
         self.auto_play.setStyleSheet("""
             QCheckBox {
@@ -515,7 +579,6 @@ class ModernSkyMusicPlayer(QMainWindow):
         
         right_layout.addLayout(play_controls)
         
-        # 速度控制
         speed_layout = QHBoxLayout()
         speed_label = QLabel("速度:")
         self.speed_slider = QSlider(Qt.Orientation.Horizontal)
@@ -531,21 +594,18 @@ class ModernSkyMusicPlayer(QMainWindow):
         speed_layout.addWidget(self.speed_input)
         right_layout.addLayout(speed_layout)
         
-        # 进度条
         self.progress_bar = QProgressBar()
         self.progress_bar.setRange(0, 100)
         self.progress_bar.setValue(0)
         self.progress_bar.setTextVisible(True)
         self.progress_bar.setFormat("%p%")
-        # 允许鼠标点击和拖动
         self.progress_bar.setMouseTracking(True)
         self.progress_bar.mousePressEvent = self.on_progress_click
         self.progress_bar.mouseMoveEvent = self.on_progress_drag
         self.progress_bar.mouseReleaseEvent = self.on_progress_release
-        self.is_dragging = False  # 添加拖动状态标记
+        self.is_dragging = False
         right_layout.addWidget(self.progress_bar)
         
-        # 快捷键设置
         hotkey_layout = QGridLayout()
         hotkey_layout.addWidget(QLabel("暂停:"), 0, 0)
         self.hotkey_edits["pause"] = HotkeyEdit("F10")
@@ -556,8 +616,39 @@ class ModernSkyMusicPlayer(QMainWindow):
         hotkey_layout.addWidget(self.hotkey_edits["stop"], 1, 1)
         right_layout.addLayout(hotkey_layout)
         
+        delay_layout = QHBoxLayout()
+        self.delay_checkbox = QCheckBox("启用按键延时")
+        self.delay_checkbox.setChecked(self.delay_enabled)
+        self.delay_checkbox.stateChanged.connect(self.toggle_delay)
+        
+        self.delay_min_input = QLineEdit(str(self.delay_min))
+        self.delay_max_input = QLineEdit(str(self.delay_max))
+        
+        delay_layout.addWidget(self.delay_checkbox)
+        delay_layout.addWidget(QLabel("下限(ms):"))
+        delay_layout.addWidget(self.delay_min_input)
+        delay_layout.addWidget(QLabel("上限(ms):"))
+        delay_layout.addWidget(self.delay_max_input)
+        
+        right_layout.addLayout(delay_layout)
+        
+        save_button = QPushButton("保存设置")
+        save_button.clicked.connect(self.save_delay_settings)
+        right_layout.addWidget(save_button)
+        
         right_layout.addStretch()
-        self.main_layout.addWidget(right_panel, stretch=1)
+        layout.addWidget(right_panel, stretch=1)
+
+    def _update_ui(self):
+        """定时更新UI状态"""
+        if self.play_thread and self.play_thread.isRunning():
+            pass
+
+    def on_tab_changed(self, index):
+        """处理标签页切换事件"""
+        if index == 2:
+            self.open_score_folder()
+            self.sender().setCurrentIndex(0)
 
     def setup_log_window(self):
         """设置日志窗口"""
@@ -565,7 +656,6 @@ class ModernSkyMusicPlayer(QMainWindow):
         log_widget = QWidget()
         log_layout = QVBoxLayout(log_widget)
         
-        # 添加清空日志按钮
         clear_log_btn = QPushButton("清空日志")
         clear_log_btn.clicked.connect(self.clear_log)
         log_layout.addWidget(clear_log_btn)
@@ -578,11 +668,9 @@ class ModernSkyMusicPlayer(QMainWindow):
 
     def setup_hotkeys(self):
         """设置快捷键"""
-        # 设置快捷键编辑框的objectName
         self.hotkey_edits["pause"].setObjectName("pause")
         self.hotkey_edits["stop"].setObjectName("stop")
         
-        # 更新当前的快捷键设置
         for action, key in self.current_hotkeys.items():
             if action in self.hotkey_edits:
                 self.hotkey_edits[action].setText(key)
@@ -612,7 +700,6 @@ class ModernSkyMusicPlayer(QMainWindow):
         """只加载歌曲，不播放"""
         song_name = item.text()
         
-        # 检查缓存
         if song_name in self._song_cache:
             self.current_song_data = self._song_cache[song_name]
             self.log(f"从缓存加载: {song_name}")
@@ -625,7 +712,6 @@ class ModernSkyMusicPlayer(QMainWindow):
                 self.log("加载歌曲失败")
                 return
                 
-            # 缓存歌曲数据
             self._song_cache[song_name] = song_data
             self.current_song_data = song_data
             self._current_song = song_name
@@ -639,7 +725,6 @@ class ModernSkyMusicPlayer(QMainWindow):
         """加载并播放歌曲"""
         self.load_song(item)
         if self.current_song_data:
-            # 先检查光遇窗口
             if not self.check_sky_window():
                 return
             self.start_playback()
@@ -655,11 +740,9 @@ class ModernSkyMusicPlayer(QMainWindow):
                 self.log("请先选择一首歌曲")
                 return
             
-            # 先检查光遇窗口
             if not self.check_sky_window():
                 return
             
-            # 窗口检查通过后再开始播放
             self.start_playback()
             self.play_button.setText("停止")
 
@@ -673,12 +756,11 @@ class ModernSkyMusicPlayer(QMainWindow):
             speed = float(self.speed_input.text())
             self.play_thread = PlayThread(self.current_song_data, speed)
             
-            # 设置起始位置和初始进度
             if hasattr(self, 'target_progress'):
                 progress = int(self.target_progress)
                 self.play_thread.seek_position = progress
-                self.play_thread.initial_progress = progress  # 设置初始进度
-                self.progress_bar.setValue(progress)  # 设置进度条初始值
+                self.play_thread.initial_progress = progress
+                self.progress_bar.setValue(progress)
                 delattr(self, 'target_progress')
                 self.log(f"从 {progress}% 处开始播放")
             
@@ -699,24 +781,21 @@ class ModernSkyMusicPlayer(QMainWindow):
             release_all_keys()
             self.log("演奏已停止")
             
-            # 取消可能存在的延迟播放定时器
             for timer in self.findChildren(QTimer):
-                if timer != self.window_check_timer:  # 保留窗口检测定时器
+                if timer != self.window_check_timer:
                     timer.stop()
 
     def toggle_pause(self):
         """切换暂停状态"""
         if self.play_thread and self.play_thread.isRunning():
             self.play_thread.toggle_pause()
-            if not self.play_thread.paused:  # 如果是继续播放
-                # 确保光遇窗口置顶
+            if not self.play_thread.paused:
                 if not self.check_sky_window():
-                    self.play_thread.toggle_pause()  # 如果窗口检查失败，恢复暂停状态
+                    self.play_thread.toggle_pause()
                     return
             status = "暂停" if self.play_thread.paused else "继续"
             self.log(f"演奏{status}")
         elif hasattr(self, 'target_progress'):
-            # 如果有设置目标进度但还未开始播放，则开始播放
             if self.check_sky_window():
                 self.start_playback()
                 self.play_button.setText("停止")
@@ -726,12 +805,9 @@ class ModernSkyMusicPlayer(QMainWindow):
         self.play_button.setText("开始")
         self.progress_bar.setValue(0)
         
-        # 检查是否开启了自动播放
         if self.auto_play.isChecked():
-            # 检查播放模式
             current_mode = self.play_mode.currentText()
             if current_mode != "单曲播放":
-                # 延迟5秒后播放下一首
                 QTimer.singleShot(5000, lambda: self.play_next_song(current_mode))
                 self.log("5秒后自动播放下一首...")
         else:
@@ -739,17 +815,12 @@ class ModernSkyMusicPlayer(QMainWindow):
 
     def play_next_song(self, mode):
         """播放下一首歌"""
-        # 如果自动播放被关闭，不继续播放
         if not self.auto_play.isChecked():
             return
         
-        # 确定当前激活的列表
         if self.current_song_data:
-            # 获取当前歌曲名称
             current_song = self._current_song
-            # 检查歌曲是否在收藏列表中
-            if current_song in self.favorites:
-                # 在收藏列表中查找当前歌曲
+            if (current_song in self.favorites) and (self.favorites_list.count() > 0):
                 items = self.favorites_list.findItems(current_song, Qt.MatchFlag.MatchExactly)
                 if items:
                     current_list = self.favorites_list
@@ -759,30 +830,24 @@ class ModernSkyMusicPlayer(QMainWindow):
                     items = self.song_list.findItems(current_song, Qt.MatchFlag.MatchExactly)
                     current_row = self.song_list.row(items[0]) if items else 0
             else:
-                # 在所有歌曲列表中查找
                 current_list = self.song_list
                 items = self.song_list.findItems(current_song, Qt.MatchFlag.MatchExactly)
                 current_row = self.song_list.row(items[0]) if items else 0
         else:
-            # 如果没有当前歌曲，使用所有歌曲列表
             current_list = self.song_list
             current_row = 0
         
         if mode == "顺序播放":
-            # 顺序播放下一首
             next_row = (current_row + 1) % current_list.count()
-        else:  # 随机播放
-            # 随机选择一首，但避免重复
+        else:
             next_row = current_row
             while next_row == current_row and current_list.count() > 1:
                 next_row = random.randint(0, current_list.count() - 1)
         
-        # 选中并播放下一首
         current_list.setCurrentRow(next_row)
         next_item = current_list.item(next_row)
         if next_item:
             self.log(f"即将播放: {next_item.text()}")
-            # 如果是从收藏列表播放，保下一首也在收藏列表中
             if current_list == self.favorites_list:
                 self.log("从收藏列表继续播放")
             else:
@@ -804,12 +869,11 @@ class ModernSkyMusicPlayer(QMainWindow):
             pass
 
     def open_score_editor(self):
-        # Implement score editor logic
         self.log("Opening score editor")
 
     def log(self, message):
         """记录日志"""
-        if hasattr(self, 'log_widget'):  # 检查是否已初始化日志窗口
+        if hasattr(self, 'log_widget'):
             self.log_widget.addItem(message)
             self.log_widget.scrollToBottom()
 
@@ -828,19 +892,15 @@ class ModernSkyMusicPlayer(QMainWindow):
             return
         
         try:
-            # 测试新快捷键是否有效
             keyboard.parse_hotkey(new_key)
             
-            # 移除旧的快捷键
             try:
                 keyboard.remove_hotkey(self.current_hotkeys[action])
             except:
                 pass
             
-            # 设置新的快捷键
             self.current_hotkeys[action] = new_key
             
-            # 重新注册快捷键
             if action == "pause":
                 keyboard.add_hotkey(new_key, self.toggle_pause)
             elif action == "stop":
@@ -1042,3 +1102,32 @@ class ModernSkyMusicPlayer(QMainWindow):
             elif event.type() == QEvent.Type.MouseButtonRelease:
                 self.on_progress_release(event)
         return super().eventFilter(source, event)
+
+    def toggle_delay(self, state):
+        self.delay_enabled = state == Qt.CheckState.Checked
+
+    def save_delay_settings(self):
+        try:
+            self.delay_min = int(self.delay_min_input.text())
+            self.delay_max = int(self.delay_max_input.text())
+            with open('delay_settings.json', 'w', encoding='utf-8') as f:
+                json.dump({
+                    'enabled': self.delay_enabled,
+                    'min': self.delay_min,
+                    'max': self.delay_max
+                }, f, ensure_ascii=False, indent=2)
+            self.log("延时设置已保存")
+        except ValueError:
+            self.log("请输入有效的延时值")
+
+    def load_delay_settings(self):
+        try:
+            with open('delay_settings.json', 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+                self.delay_enabled = settings.get('enabled', False)
+                self.delay_min = settings.get('min', 200)
+                self.delay_max = settings.get('max', 500)
+        except FileNotFoundError:
+            self.log("未找到延时设置文件，使用默认值")
+        except Exception as e:
+            self.log(f"加载延时设置失败: {str(e)}")

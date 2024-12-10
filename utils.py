@@ -3,6 +3,7 @@ import chardet
 import codecs
 import keyboard
 import time
+import random
 
 def load_key_mapping(custom_mapping=None):
     default_mapping = {
@@ -22,7 +23,6 @@ key_mapping = load_key_mapping()
 def load_json(file_path, encoding_cache={}):
     """优化JSON加载"""
     try:
-        # 使用缓存的编码信息
         if file_path in encoding_cache:
             encoding = encoding_cache[file_path]
         else:
@@ -41,10 +41,15 @@ def load_json(file_path, encoding_cache={}):
         print(f"读取JSON文件出错: {e}")
         return None
 
-def press_key(key, time_interval):
+def press_key(key, time_interval, delay_enabled=False, delay_min=200, delay_max=500):
     if key in key_mapping:
         key_to_press = key_mapping[key]
         keyboard.press(key_to_press)
+        
+        if delay_enabled:
+            delay = random.randint(delay_min, delay_max) / 1000.0
+            time.sleep(delay)
+        
         time.sleep(time_interval)
         keyboard.release(key_to_press)
     else:

@@ -3,6 +3,7 @@ import sys
 from PyQt6.QtWidgets import QApplication
 from PyQt6.QtGui import QIcon
 from gui import ModernSkyMusicPlayer
+from config import LOCAL_VERSION  # 从 config.py 导入
 
 def resource_path(relative_path):
     """获取资源文件的绝对路径"""
