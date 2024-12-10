@@ -449,8 +449,8 @@ class ModernSkyMusicPlayer(QMainWindow):
         # 添加关于标签页
         about_tab = QWidget()
         about_layout = QVBoxLayout(about_tab)
-        about_layout.setContentsMargins(20, 20, 20, 20)  # 增加边距
-        about_layout.setSpacing(10)  # 增加控件间距
+        about_layout.setContentsMargins(20, 20, 20, 20)
+        about_layout.setSpacing(10)
         
         # 软件信息
         latest_version = fetch_latest_version()
@@ -459,31 +459,20 @@ class ModernSkyMusicPlayer(QMainWindow):
         latest_version_label = QLabel(f"最新版本: {latest_version}")
         author_label = QLabel("作者: Tloml-Starry")
         
-        # 使用按钮代替标签
-        homepage_button = QPushButton("项目主页")
-        homepage_button.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
-        homepage_button.clicked.connect(lambda: webbrowser.open("https://github.com/Tloml-Starry/SkyAutoMusic"))
+        # 使用文本加超链接
+        homepage_label = QLabel('项目主页：<a href="https://github.com/Tloml-Starry/SkyAutoMusic">GitHub</a> | <a href="https://gitee.com/Tloml-Starry/SkyAutoMusic">Gitee</a>')
+        homepage_label.setOpenExternalLinks(True)
         
-        feedback_button = QPushButton("BUG反馈&功能提议")
-        feedback_button.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
-        feedback_button.clicked.connect(lambda: webbrowser.open("https://qm.qq.com/q/dWe60BFyE0"))
+        feedback_label = QLabel('BUG反馈&功能提议&交流群: <a href="https://qm.qq.com/q/dWe60BFyE0">392665563</a>')
+        feedback_label.setOpenExternalLinks(True)
         
         # 将标签添加到布局中
-        for widget in [version_label, latest_version_label, author_label]:
+        for widget in [version_label, latest_version_label, author_label, homepage_label, feedback_label]:
             widget.setAlignment(Qt.AlignmentFlag.AlignCenter)
             widget.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
             about_layout.addWidget(widget)
         
-        # 创建水平布局用于按钮
-        button_layout = QHBoxLayout()
-        button_layout.setSpacing(20)  # 增加按钮间距
-        button_layout.addWidget(homepage_button)
-        button_layout.addWidget(feedback_button)
-        
-        # 将按钮布局添加到关于布局中
-        about_layout.addStretch()  # 添加弹性空间
-        about_layout.addLayout(button_layout)
-        about_layout.addStretch()  # 添加弹性空间
+        about_layout.addStretch()
         
         main_tab_widget.addTab(about_tab, "关于")
         
@@ -618,11 +607,33 @@ class ModernSkyMusicPlayer(QMainWindow):
         
         delay_layout = QHBoxLayout()
         self.delay_checkbox = QCheckBox("启用按键延时")
+        self.delay_checkbox.setStyleSheet("""
+            QCheckBox {
+                color: #cccccc;
+                spacing: 5px;
+            }
+            QCheckBox::indicator {
+                width: 18px;
+                height: 18px;
+                border-radius: 3px;
+                border: 1px solid #555555;
+                background: #252525;
+            }
+            QCheckBox::indicator:checked {
+                background: #4CAF50;
+                border: 1px solid #45a049;
+            }
+            QCheckBox::indicator:hover {
+                border: 1px solid #4CAF50;
+            }
+        """)
         self.delay_checkbox.setChecked(self.delay_enabled)
         self.delay_checkbox.stateChanged.connect(self.toggle_delay)
         
         self.delay_min_input = QLineEdit(str(self.delay_min))
+        self.delay_min_input.setFixedWidth(50)
         self.delay_max_input = QLineEdit(str(self.delay_max))
+        self.delay_max_input.setFixedWidth(50)
         
         delay_layout.addWidget(self.delay_checkbox)
         delay_layout.addWidget(QLabel("下限(ms):"))
@@ -765,12 +776,16 @@ class ModernSkyMusicPlayer(QMainWindow):
                 self.log(f"从 {progress}% 处开始播放")
             
             self.play_thread.update_log.connect(self.log)
-            self.play_thread.update_progress.connect(lambda p: self.progress_bar.setValue(int(p)))
+            self.play_thread.update_progress.connect(self.update_progress_bar)
             self.play_thread.finished.connect(self.on_playback_finished)
             self.play_thread.start()
             self.play_button.setText("停止")
         except Exception as e:
             self.log(f"播放出错: {str(e)}")
+
+    def update_progress_bar(self, progress):
+        """更新进度条"""
+        self.progress_bar.setValue(int(progress))
 
     def stop_playback(self):
         """停止播放"""
@@ -1000,12 +1015,17 @@ class ModernSkyMusicPlayer(QMainWindow):
 
     def on_progress_click(self, event):
         """处理进度条点击事件"""
+        if not self.current_song_data:
+            self.log("请先选择一首歌曲")
+            return
         if event.button() == Qt.MouseButton.LeftButton:
             self.is_dragging = True
             self.update_progress_position(event)
 
     def on_progress_drag(self, event):
         """处理进度条拖动事件"""
+        if not self.current_song_data:
+            return
         if self.is_dragging:
             self.update_progress_position(event)
 
