@@ -2,8 +2,10 @@ import time
 import threading
 from utils import press_key, release_all_keys, get_key_mapping
 import keyboard
+import random
 
-def play_song(song_data, stop_event, speed_factor, log_window, initial_progress=0):
+def play_song(song_data, stop_event, speed_factor, log_window, initial_progress=0, 
+              delay_enabled=False, delay_min=200, delay_max=500):
     # 预处理音符数据
     notes = []
     if isinstance(song_data, dict):
@@ -97,17 +99,24 @@ def play_song(song_data, stop_event, speed_factor, log_window, initial_progress=
             if sleep_time > 0:
                 time.sleep(sleep_time)
                 
-            # 同时按下和弦的所有音符
             try:
+                # 同时按下和弦的所有音符
                 for chord_key in current_chord:
                     key_to_press = key_map[chord_key]
                     keyboard.press(key_to_press)
-                time.sleep(0.1)  
+                
+                # 添加延时
+                if delay_enabled:
+                    delay = random.randint(delay_min, delay_max) / 1000.0
+                    time.sleep(delay)
+                else:
+                    time.sleep(0.1)
+                    
                 # 同时释放和弦的所有音符
                 for chord_key in current_chord:
                     key_to_press = key_map[chord_key]
                     keyboard.release(key_to_press)
-                    
+                
                 # 更新进度
                 progress = (note.get("time", 0) if isinstance(note, dict) else note[1] - first_time) / total_duration * 100
                 if hasattr(log_window, 'update_play_progress'):
@@ -118,7 +127,7 @@ def play_song(song_data, stop_event, speed_factor, log_window, initial_progress=
                 
             current_chord = []
         else:
-            # 播放单个音符
+            # 修改单个音符播放部分
             sleep_time = note_time - (time.perf_counter() - start_time)
             
             if sleep_time > 0:
@@ -127,7 +136,14 @@ def play_song(song_data, stop_event, speed_factor, log_window, initial_progress=
             try:
                 key_to_press = key_map[key]
                 keyboard.press(key_to_press)
-                time.sleep(0.1)
+                
+                # 添加延时
+                if delay_enabled:
+                    delay = random.randint(delay_min, delay_max) / 1000.0
+                    time.sleep(delay)
+                else:
+                    time.sleep(0.1)
+                    
                 keyboard.release(key_to_press)
                 
                 current_time = note.get("time", 0) if isinstance(note, dict) else note[1]

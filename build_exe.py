@@ -6,6 +6,6 @@ PyInstaller.__main__.run([
     '--windowed',
     '--icon=icon.ico',
     '--add-data=icon.ico;.',
-    '--name=SkyPlayer',
+    '--name=SkyPlayer v2.4.1',
     '--manifest=app.manifest'
 ])
